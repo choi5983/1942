@@ -53,7 +53,8 @@
 			xVelocity: 0,
 			yVelocity: 0,
 			defaultSpeed: 10,
-			fireSpeed: 5
+			fireSpeed: 5,
+			score: 100
 		};
 		var keyboard = {
 			left: false,
@@ -66,17 +67,17 @@
 		var enemies = [
 			{
 				x:(Math.random()*700)+50,
-				y:100,
+				y:-5,
 				velocity: Math.random()*3 + 2
 			},
 			{
 				x:(Math.random()*700)+50,
-				y:100,
+				y:-5,
 				velocity: Math.random()*3 + 2
 			},
 			{
 				x:(Math.random()*700)+50,
-				y:100,
+				y:-5,
 				velocity: Math.random()*3 + 2
 			}
 		];
@@ -122,10 +123,6 @@
 		});
 
 		$(document).keyup(function(e){
-			console.log(e);
-			// e = e.originalEvent;
-
-
 			if(e.keyCode == 37 && keyboard.left){
 				keyboard.left = false;
 			}
@@ -186,13 +183,26 @@
 		}
 
 		function enemyHit(){
-			
+			for(var i = enemies.length - 1; i >= 0; i--){
+				for(var j = bullets.length - 1; j >= 0; j--){
+					enemy = enemies[i];
+					bullet = bullets[j];
+					if(bullet.x < enemy.x + 27 && bullet.x > enemy.x - 17 && bullet.y < enemy.y + 15 && bullet.y > enemy.y - 17){	
+						enemies.splice(i, 1);
+						bullets.splice(j, 1);
+						$("#score").text(player.score + 10);
+						player.score += 10;
+						break;
+					}
+				}
+			}
 		}
 
 		function gameLoop(){
 			displayHero();
 			displayEnemies();
 			displayBullets();
+			enemyHit();
 		}
 
 		setInterval(gameLoop, 20);
