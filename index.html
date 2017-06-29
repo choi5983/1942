@@ -43,16 +43,167 @@
 		font-family: Arial;	
 	}
 </style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript">
+	$(document).ready(function(){
+		var player = {
+			x:400,
+			y:400,
+			xVelocity: 0,
+			yVelocity: 0,
+			defaultSpeed: 10,
+			fireSpeed: 5
+		};
+		var keyboard = {
+			left: false,
+			right: false,
+			up: false,
+			down: false,
+			space: false,
+			keysDown: 0
+		}
+		var enemies = [
+			{
+				x:(Math.random()*700)+50,
+				y:100,
+				velocity: Math.random()*3 + 2
+			},
+			{
+				x:(Math.random()*700)+50,
+				y:100,
+				velocity: Math.random()*3 + 2
+			},
+			{
+				x:(Math.random()*700)+50,
+				y:100,
+				velocity: Math.random()*3 + 2
+			}
+		];
+
+		var bullets = [];
+
+		function displayHero(){
+			$("#hero").css('top', (player.y + player.yVelocity) + "px");
+			$("#hero").css('left', (player.x + player.xVelocity) + "px");
+			player.y += player.yVelocity;
+			player.x += player.xVelocity;
+		}
+
+		$(document).keydown(function(e){
+				if(e.keyCode == 37 && !keyboard.left){
+					player.yVelocity = 0;
+					player.xVelocity = -player.defaultSpeed;
+					keyboard.keysDown++;
+					keyboard.left = true;
+				}
+				else if(e.keyCode == 39 && !keyboard.right){
+					player.yVelocity = 0;
+					player.xVelocity = player.defaultSpeed;
+					keyboard.keysDown++;
+					keyboard.right = true;
+				}
+				else if(e.keyCode == 38 && !keyboard.up){
+					player.yVelocity = -player.defaultSpeed;
+					player.xVelocity = 0;
+					keyboard.keysDown++;
+					keyboard.up = true;
+				}
+				else if(e.keyCode == 40 && !keyboard.down){
+					player.yVelocity = player.defaultSpeed;
+					player.xVelocity = 0;
+					keyboard.keysDown++;
+					keyboard.down = true;
+				}
+				else if(e.keyCode == 32 && !keyboard.space){
+					keyboard.keysDown++;
+					keyboard.space = true;
+				}
+		});
+
+		$(document).keyup(function(e){
+			console.log(e);
+			// e = e.originalEvent;
+
+
+			if(e.keyCode == 37 && keyboard.left){
+				keyboard.left = false;
+			}
+			else if(e.keyCode == 39 && keyboard.right){
+				keyboard.right = false;
+			}
+			else if(e.keyCode == 38 && keyboard.up){
+				keyboard.up = false;
+			}
+			else if(e.keyCode == 40 && keyboard.down){
+				keyboard.down = false;
+			}
+			else if(e.keyCode == 32 && keyboard.space){
+				keyboard.space = false;
+				bullets.push({
+					x:player.x + 5,
+					y:player.y - 8
+				});
+			}
+
+
+			keyboard.keysDown--;
+			if(keyboard.keysDown == 0 || (keyboard.keysDown == 1 && keyboard.space)){
+				player.xVelocity = 0;
+				player.yVelocity = 0;
+			}
+
+			
+		});
+
+		function displayEnemies(){
+			var output = "";
+			for(enemy in enemies){
+				if(enemies[enemy].y > 540){
+					enemies[enemy].x = (Math.random()*700)+50;
+					enemies[enemy].y = -5;
+					enemies[enemy].velocity = Math.random()*3 + 2
+				}
+				output+="<div class='enemy1' style='top:" + (enemies[enemy].y + enemies[enemy].velocity)
+					+ "px; left:" + enemies[enemy].x + "px;'></div>"
+				enemies[enemy].y += enemies[enemy].velocity;
+			}
+			$("#enemies").html(output);
+		}
+
+		function displayBullets(){
+			var output = "";
+			for(var i = bullets.length - 1; i >= 0; i--){
+				if(bullets[i].y < 5){
+					bullets.splice(i, 1);
+					continue;
+				}
+				output += "<div class='bullet' style='top:" + (bullets[i].y - player.fireSpeed) + "px; left:" + bullets[i].x + "px;'></div>";
+				bullets[i].y -= player.fireSpeed;
+			}
+
+			$("#bullets").html(output);
+		}
+
+		function enemyHit(){
+			
+		}
+
+		function gameLoop(){
+			displayHero();
+			displayEnemies();
+			displayBullets();
+		}
+
+		setInterval(gameLoop, 20);
+	});
+</script>
+
 </head>
 <body>
 	<div id='container'>
-		<div id='hero' style='top:300px; left:300px;'></div>
-		<div id='enemies'>
-			<div class='enemy1' style='top:100px; left:100px;'></div>
-			<div class='enemy1' style='top:100px; left:200px;'></div>
-			<div class='enemy1' style='top:100px; left:300px;'></div>
-			<div class='enemy1' style='top:100px; left:400px;'></div>
-		</div>
+		<div id='hero'></div>
+		<div id='enemies'></div>
 		<div id='bullets'>
 			<div class='bullet' style='top:150px; left:200px;'></div>
 			<div class='bullet' style='top:250px; left:200px;'></div>
