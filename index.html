@@ -18,6 +18,13 @@
 		height:28px;
 		position:absolute;
 	}
+	.bullet{
+		background: url('1942.gif');
+		background-position: -185px -400px;
+		width:18px;
+		height:18px;
+		position:absolute;
+	}
 	.enemy1{
 		background: url('1942.gif');
 		background-position: -30px -10px;
@@ -25,11 +32,10 @@
 		height:28px;
 		position:absolute;
 	}
-	.bullet{
-		background: url('1942.gif');
-		background-position: -185px -400px;
-		width:18px;
-		height:18px;
+	.explosion{
+		background: url('explosion.gif');
+		width: 30px;
+		height: 30px;
 		position:absolute;
 	}
 	#score{
@@ -43,22 +49,212 @@
 		font-family: Arial;	
 	}
 </style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript">
+	$(document).ready(function(){
+		var player = {
+			x:400,
+			y:400,
+			xVelocity: 0,
+			yVelocity: 0,
+			defaultSpeed: 5,
+			fireSpeed: 5,
+			score: 100
+		};
+		var keyboard = {
+			left: false,
+			right: false,
+			up: false,
+			down: false,
+			space: false,
+			keysDown: 0
+		}
+		var enemies = [];
+
+		var bullets = [];
+
+		var explosionIds = 1;
+
+		function displayHero(){
+			if(player.x + player.xVelocity > 9 && player.x + player.xVelocity < 989 &&
+				player.y + player.yVelocity > 9 && player.y + player.yVelocity < 536){
+				$("#hero").css('top', (player.y + player.yVelocity) + "px");
+				$("#hero").css('left', (player.x + player.xVelocity) + "px");
+				player.y += player.yVelocity;
+				player.x += player.xVelocity;
+			}
+		}
+
+		function playerHit(){
+			for(var i = enemies.length - 1; i >= 0; i--){
+				enemy = enemies[i];
+				if(player.x < enemy.x + 27 && player.x > enemy.x - 27 && player.y < enemy.y + 15 && player.y > enemy.y - 27){
+					explosion(enemy.x, enemy.y);
+					enemies.splice(i, 1);
+					$("#score").text(player.score - 100);
+					player.score -= 100;
+					break;
+				}
+			}
+		}
+
+		$(document).keydown(function(e){
+				if(e.keyCode == 37 && !keyboard.left){
+					player.yVelocity = 0;
+					player.xVelocity = -player.defaultSpeed;
+					keyboard.keysDown++;
+					keyboard.left = true;
+				}
+				else if(e.keyCode == 39 && !keyboard.right){
+					player.yVelocity = 0;
+					player.xVelocity = player.defaultSpeed;
+					keyboard.keysDown++;
+					keyboard.right = true;
+				}
+				else if(e.keyCode == 38 && !keyboard.up){
+					player.yVelocity = -player.defaultSpeed;
+					player.xVelocity = 0;
+					keyboard.keysDown++;
+					keyboard.up = true;
+				}
+				else if(e.keyCode == 40 && !keyboard.down){
+					player.yVelocity = player.defaultSpeed;
+					player.xVelocity = 0;
+					keyboard.keysDown++;
+					keyboard.down = true;
+				}
+				else if(e.keyCode == 32 && !keyboard.space){
+					keyboard.keysDown++;
+					keyboard.space = true;
+				}
+		});
+
+		$(document).keyup(function(e){
+			if(e.keyCode == 37 && keyboard.left){
+				keyboard.left = false;
+			}
+			else if(e.keyCode == 39 && keyboard.right){
+				keyboard.right = false;
+			}
+			else if(e.keyCode == 38 && keyboard.up){
+				keyboard.up = false;
+			}
+			else if(e.keyCode == 40 && keyboard.down){
+				keyboard.down = false;
+			}
+			else if(e.keyCode == 32 && keyboard.space){
+				keyboard.space = false;
+				bullets.push({
+					x:player.x + 5,
+					y:player.y - 8
+				});
+				var audio = new Audio('pew.wav');
+				audio.play();
+			}
+
+
+			keyboard.keysDown--;
+			if(keyboard.keysDown == 0 || (keyboard.keysDown == 1 && keyboard.space)){
+				player.xVelocity = 0;
+				player.yVelocity = 0;
+			}
+		});
+
+		function displayEnemies(){
+			if(enemies.length < 7){
+				for(var i = enemies.length; i < 7; i++){
+					enemies.push({
+						x:(Math.random()*700)+50,
+						y:-5,
+						velocity:Math.random()*1.5 + 1
+					});
+				}
+			}
+			var output = "";
+			for(enemy in enemies){
+				if(enemies[enemy].y > 540){
+					enemies[enemy].x = (Math.random()*700)+50;
+					enemies[enemy].y = -5;
+					enemies[enemy].velocity = Math.random()*1.5 + 1;
+				}
+				output+="<div class='enemy1' style='top:" + (enemies[enemy].y + enemies[enemy].velocity)
+					+ "px; left:" + enemies[enemy].x + "px;'></div>"
+				enemies[enemy].y += enemies[enemy].velocity;
+			}
+			$("#enemies").html(output);
+		}
+
+		function enemyHit(){
+			for(var i = enemies.length - 1; i >= 0; i--){
+				for(var j = bullets.length - 1; j >= 0; j--){
+					enemy = enemies[i];
+					bullet = bullets[j];
+					if(bullet.x < enemy.x + 27 && bullet.x > enemy.x - 17 && bullet.y < enemy.y + 15 && bullet.y > enemy.y - 17){	
+						explosion(enemy.x, enemy.y);
+						enemies.splice(i, 1);
+						bullets.splice(j, 1);
+						$("#score").text(player.score + 10);
+						player.score += 10;
+						var audio = new Audio('enemyDown.wav');
+						audio.play();
+						break;
+					}
+				}
+			}
+		}
+
+		function displayBullets(){
+			var output = "";
+			for(var i = bullets.length - 1; i >= 0; i--){
+				if(bullets[i].y < 5){
+					bullets.splice(i, 1);
+					continue;
+				}
+				output += "<div class='bullet' style='top:" + (bullets[i].y - player.fireSpeed) + "px; left:" + bullets[i].x + "px;'></div>";
+				bullets[i].y -= player.fireSpeed;
+			}
+
+			$("#bullets").html(output);
+		}
+
+		function explosion(x, y){
+			var exX = x;
+			var exY = y;
+			$("#container").append("<div class='explosion' id='ex"+explosionIds+"' style='top:" + y + "px; left:" + x + "px;'></div>");
+			var thisID = explosionIds;
+			explosionIds++;
+			setTimeout(function(x,y){
+				console.log('hello');
+				console.log("#x" + exX + "y" + exY);
+				$("#ex" + thisID).remove();
+			}, 679);
+		}	
+
+		function gameLoop(){
+			displayHero();
+			displayEnemies();
+			displayBullets();
+			playerHit();
+			enemyHit();
+		}
+
+		var bgm = new Audio('Jumpshot.mp3');
+		bgm.loop = true;
+		bgm.volume = .3;
+		bgm.play();
+
+		setInterval(gameLoop, 10);
+	});
+</script>
+
 </head>
 <body>
 	<div id='container'>
-		<div id='hero' style='top:300px; left:300px;'></div>
-		<div id='enemies'>
-			<div class='enemy1' style='top:100px; left:100px;'></div>
-			<div class='enemy1' style='top:100px; left:200px;'></div>
-			<div class='enemy1' style='top:100px; left:300px;'></div>
-			<div class='enemy1' style='top:100px; left:400px;'></div>
-		</div>
-		<div id='bullets'>
-			<div class='bullet' style='top:150px; left:200px;'></div>
-			<div class='bullet' style='top:250px; left:200px;'></div>
-			<div class='bullet' style='top:350px; left:200px;'></div>
-			<div class='bullet' style='top:450px; left:200px;'></div>
-		</div>	
+		<div id='hero'></div>
+		<div id='enemies'></div>
+		<div id='bullets'></div>
+		<div id="explosion"></div>	
 	</div>
 
 	<div id='score'>100</div>
